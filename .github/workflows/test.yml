@@ -280,6 +280,62 @@ jobs:
       # TODO: support entire test suite
       - run: zig build functionaltest -- test/functional/api/buffer_spec.lua
 
+  web:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      DEPS_BUILD_DIR: ${{ github.workspace }}/.deps-web
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup
+        with:
+          install_flags: "--test"
+
+      - name: Setup emsdk
+        uses: mymindstorm/setup-emsdk@v14
+
+      - name: Build third-party deps (web)
+        run: |
+          emcmake cmake -S cmake.deps -B .deps-web -G Ninja \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D USE_BUNDLED_LUAJIT=OFF \
+            -D USE_BUNDLED_LUA=ON
+          cmake --build .deps-web
+
+      - name: Build web bundle
+        run: |
+          emcmake cmake -S . -B build-web -G Ninja \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D ENABLE_WEB=ON \
+            -D WEB_TOOLCHAIN=emscripten \
+            -D PREFER_LUA=ON
+          cmake --build build-web --target nvim_web_bundle
+
+      - name: Install smoke dependencies
+        run: |
+          cd contrib/web
+          npm install playwright
+          npx --yes playwright install chromium
+
+      - name: Smoke test
+        env:
+          NVIM_WEB_URL: http://127.0.0.1:8080
+          NVIM_WEB_REPORT: ${{ github.workspace }}/build-web/web/dist/SMOKE_TEST_REPORT.md
+        run: |
+          cd build-web/web/dist
+          python3 -m http.server 8080 &
+          server_pid=$!
+          trap "kill $server_pid" EXIT
+          cd "$GITHUB_WORKSPACE"
+          node contrib/web/smoke.mjs
+
+      - name: Upload web artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: nvim-web
+          path: build-web/web/dist
+          retention-days: 3
+
   windows:
     uses: ./.github/workflows/test_windows.yml
 

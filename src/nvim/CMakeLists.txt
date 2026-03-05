@@ -10,6 +10,27 @@ set_target_properties(nvim_bin
   ENABLE_EXPORTS TRUE
   OUTPUT_NAME nvim)
 
+if(ENABLE_WEB)
+  if(NOT EMSCRIPTEN AND NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    message(FATAL_ERROR "ENABLE_WEB requires an Emscripten toolchain")
+  endif()
+  target_compile_definitions(main_lib INTERFACE NVIM_WEB)
+  target_compile_definitions(nvim_bin PRIVATE NVIM_WEB)
+  set_target_properties(nvim_bin PROPERTIES SUFFIX ".js")
+  target_link_options(nvim_bin PRIVATE
+    "-sWASM=1"
+    "-sMODULARIZE=1"
+    "-sEXPORT_NAME=createNvimModule"
+    "-sENVIRONMENT=web,worker"
+    "-sALLOW_MEMORY_GROWTH=1"
+    "-sFORCE_FILESYSTEM=1"
+    "-sINVOKE_RUN=0"
+    "-sEXIT_RUNTIME=0"
+    "-sASSERTIONS=1"
+    "-sEXPORTED_RUNTIME_METHODS=['FS','IDBFS','callMain']"
+    "--preload-file" "${PROJECT_SOURCE_DIR}/runtime@/runtime")
+endif()
+
 #-------------------------------------------------------------------------------
 # Dependencies
 #-------------------------------------------------------------------------------
@@ -441,6 +462,9 @@ foreach(sfile ${NVIM_SOURCES})
   if(WIN32 AND ${f} MATCHES "^(pty_proc_unix.c)$")
     list(REMOVE_ITEM NVIM_SOURCES ${sfile})
   endif()
+  if(ENABLE_WEB AND ${f} MATCHES "^(pty_proc_unix.c)$")
+    list(REMOVE_ITEM NVIM_SOURCES ${sfile})
+  endif()
   if(NOT WIN32 AND ${f} MATCHES "^(pty_proc_win.c)$")
     list(REMOVE_ITEM NVIM_SOURCES ${sfile})
   endif()
@@ -458,6 +482,9 @@ foreach(hfile ${NVIM_HEADERS})
     list(REMOVE_ITEM NVIM_HEADERS ${hfile})
   endif()
   if(WIN32 AND ${f} MATCHES "^(pty_proc_unix.h)$")
+    list(REMOVE_ITEM NVIM_HEADERS ${hfile})
+  endif()
+  if(ENABLE_WEB AND ${f} MATCHES "^(pty_proc_unix.h)$")
     list(REMOVE_ITEM NVIM_HEADERS ${hfile})
   endif()
   if(NOT WIN32 AND ${f} MATCHES "^(win_defs.h)$")

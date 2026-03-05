@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Neovim Web Demo</title>
+    <style>
+      :root {
+        --bg: #0c1017;
+        --panel: #131a24;
+        --text: #dde4ee;
+        --muted: #9aacbf;
+        --accent: #4ad49c;
+      }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at top, #1a2433 0%, var(--bg) 45%);
+        color: var(--text);
+        font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      }
+      .app {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+      }
+      button, label {
+        background: var(--panel);
+        color: var(--text);
+        border: 1px solid #29384f;
+        padding: 7px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      button:hover, label:hover {
+        border-color: #4a678b;
+      }
+      .status {
+        margin-left: auto;
+        color: var(--muted);
+      }
+      .status.ready {
+        color: var(--accent);
+      }
+      #screen {
+        width: 100%;
+        border: 1px solid #2a3d57;
+        border-radius: 8px;
+        background: #090d14;
+        image-rendering: pixelated;
+        display: block;
+      }
+      #log {
+        margin-top: 10px;
+        background: #090d14;
+        border: 1px solid #223145;
+        border-radius: 8px;
+        min-height: 80px;
+        max-height: 180px;
+        overflow: auto;
+        padding: 8px;
+        color: #b8c9df;
+        white-space: pre-wrap;
+      }
+      #filePicker {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="toolbar">
+        <button id="openBtn" type="button">Open File</button>
+        <button id="saveBtn" type="button">Save</button>
+        <button id="helpBtn" type="button">:help</button>
+        <input id="filePicker" type="file" />
+        <span id="status" class="status">Booting...</span>
+      </div>
+      <canvas id="screen" tabindex="0"></canvas>
+      <div id="log"></div>
+    </div>
+    <script src="./app.js"></script>
+  </body>
+</html>
