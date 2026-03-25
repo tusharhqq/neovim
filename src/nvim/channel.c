@@ -361,6 +361,27 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
                            const char *cwd, uint16_t pty_width, uint16_t pty_height, dict_T *env,
                            varnumber_T *status_out)
 {
+#ifdef NVIM_WEB
+  (void)exepath;
+  (void)on_stdout;
+  (void)on_stderr;
+  (void)on_exit;
+  (void)pty;
+  (void)rpc;
+  (void)overlapped;
+  (void)detach;
+  (void)stdin_mode;
+  (void)cwd;
+  (void)pty_width;
+  (void)pty_height;
+  emsg("job control is not supported in web builds");
+  shell_free_argv(argv);
+  if (env) {
+    tv_dict_free(env);
+  }
+  *status_out = 0;
+  return NULL;
+#else
   Channel *chan = channel_alloc(kChannelStreamProc);
   chan->on_data = on_stdout;
   chan->on_stderr = on_stderr;
@@ -461,11 +482,21 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
 
   *status_out = (varnumber_T)chan->id;
   return chan;
+#endif
 }
 
 uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader on_output,
                          int timeout, const char **error)
 {
+#ifdef NVIM_WEB
+  (void)tcp;
+  (void)address;
+  (void)rpc;
+  (void)on_output;
+  (void)timeout;
+  *error = "socket channels are not supported in web builds";
+  return 0;
+#else
   Channel *channel;
 
   if (!tcp && rpc) {
@@ -504,6 +535,7 @@ uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader
 end:
   channel_create_event(channel, address);
   return channel->id;
+#endif
 }
 
 /// Creates an RPC channel from a tcp/pipe socket connection

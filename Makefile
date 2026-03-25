@@ -75,6 +75,8 @@ endif
 
 DEPS_CMAKE_FLAGS ?=
 USE_BUNDLED ?=
+WEB_BUILD_DIR ?= build-web
+WEB_DEPS_BUILD_DIR ?= .deps-web
 
 ifdef BUNDLED_CMAKE_FLAG
   $(error BUNDLED_CMAKE_FLAG was removed. Use DEPS_CMAKE_FLAGS instead)
@@ -100,6 +102,12 @@ SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
 
 nvim: build/.ran-cmake deps
 	$(CMAKE) --build build
+
+web:
+	DEPS_BUILD_DIR=$(WEB_DEPS_BUILD_DIR) emcmake $(CMAKE) -S $(MAKEFILE_DIR)/cmake.deps -B $(WEB_DEPS_BUILD_DIR) -G $(CMAKE_GENERATOR) $(DEPS_CMAKE_FLAGS) -D CMAKE_BUILD_TYPE=Release -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON
+	DEPS_BUILD_DIR=$(WEB_DEPS_BUILD_DIR) $(CMAKE) --build $(WEB_DEPS_BUILD_DIR)
+	DEPS_BUILD_DIR=$(WEB_DEPS_BUILD_DIR) emcmake $(CMAKE) -S $(MAKEFILE_DIR) -B $(WEB_BUILD_DIR) -G $(CMAKE_GENERATOR) -D CMAKE_BUILD_TYPE=Release -D ENABLE_WEB=ON -D WEB_TOOLCHAIN=emscripten -D PREFER_LUA=ON
+	DEPS_BUILD_DIR=$(WEB_DEPS_BUILD_DIR) $(CMAKE) --build $(WEB_BUILD_DIR) --target nvim_web_bundle
 
 libnvim: build/.ran-cmake deps
 	$(CMAKE) --build build --target libnvim
@@ -193,7 +201,7 @@ appimage:
 appimage-%:
 	bash scripts/genappimage.sh $*
 
-.PHONY: test clean distclean nvim libnvim cmake deps install appimage checkprefix benchmark $(FORMAT) $(LINT) $(TEST)
+.PHONY: test clean distclean nvim web libnvim cmake deps install appimage checkprefix benchmark $(FORMAT) $(LINT) $(TEST)
 
 .PHONY: emmylua-check
 emmylua-check:

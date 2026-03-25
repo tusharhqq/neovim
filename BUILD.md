@@ -84,6 +84,26 @@ View the full list of CMake options defined in this project:
 cmake -B build -LH
 ```
 
+### Web build (Emscripten)
+
+The web target is opt-in and produces a browser bundle (WASM + JS + demo UI).
+
+```bash
+make web
+```
+
+Artifacts are written to:
+
+```text
+build-web/web/dist/
+```
+
+Key CMake options for this target:
+
+- `ENABLE_WEB=ON`
+- `WEB_TOOLCHAIN=emscripten`
+- `PREFER_LUA=ON` (required for this path)
+
 ## Building on Windows
 
 ### Windows / MSVC
